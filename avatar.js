@@ -7,7 +7,7 @@ window.onload = () => loadmodel();
 function loadmodel() {
   const loader = new GLTFLoader();
   loader.load(
-    "public/avatar.glb",
+    "./public/avatar.glb",
     (gltf) => {
       // 2- Appelée quand le chargement est terminé
       setupScene(gltf);
@@ -92,17 +92,18 @@ function setupScene(gltf) {
     }
   });
 
-  avatar.position.y -= 0.5;
+  avatar.position.y -= 0.4;
   scene.add(avatar);
 
   // Création du piédestal
-  const groundGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.08, 64);
+  const groundGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.08, 64);
   const groundMaterial = new THREE.MeshStandardMaterial();
   const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
   groundMesh.castShadow = false;
   groundMesh.receiveShadow = true;
-  groundMesh.position.y -= 0.5;
-  // scene.add(groundMesh);
+  groundMesh.position.set(-0.1, -0.4, 0);
+  // groundMesh.position.y -= 0.4;
+  scene.add(groundMesh);
 
   // Chargement des animations
   const mixer = new THREE.AnimationMixer(avatar);
@@ -112,13 +113,21 @@ function setupScene(gltf) {
   const waveAction = mixer.clipAction(waveClip);
   const stumbleAction = mixer.clipAction(stumbleClip);
 
+  const raycaster = new THREE.Raycaster();
   container.addEventListener("mousedown", (ev) => {
     const coords = {
       x: (ev.offsetX / container.clientWidth) * 2 - 1,
       y: -(ev.offsetY / container.clientHeight) * 2 + 1,
     };
 
-    console.log(coords);
+    raycaster.setFromCamera(coords, camera);
+    const intersections = raycaster.intersectObject(avatar);
+
+    if (intersections.length > 0) {
+      stumbleAction.reset();
+      stumbleAction.play();
+      waveAction.crossFadeTo(stumbleAction, 0.3);
+    }
   });
 
   // Boucle d'animation
