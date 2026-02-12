@@ -103,7 +103,7 @@ function setupScene(gltf) {
   groundMesh.receiveShadow = true;
   groundMesh.position.set(-0.1, -0.4, 0);
   // groundMesh.position.y -= 0.4;
-  scene.add(groundMesh);
+  // scene.add(groundMesh);
 
   // Chargement des animations
   const mixer = new THREE.AnimationMixer(avatar);
@@ -113,6 +113,7 @@ function setupScene(gltf) {
   const waveAction = mixer.clipAction(waveClip);
   const stumbleAction = mixer.clipAction(stumbleClip);
 
+  let isStumbling = false;
   const raycaster = new THREE.Raycaster();
   container.addEventListener("mousedown", (ev) => {
     const coords = {
@@ -124,9 +125,19 @@ function setupScene(gltf) {
     const intersections = raycaster.intersectObject(avatar);
 
     if (intersections.length > 0) {
+      if (isStumbling) return;
+
+      isStumbling = true;
       stumbleAction.reset();
       stumbleAction.play();
       waveAction.crossFadeTo(stumbleAction, 0.3);
+
+      setTimeout(() => {
+        waveAction.reset();
+        waveAction.play();
+        stumbleAction.crossFadeTo(waveAction, 1);
+        setTimeout(() => (isStumbling = false), 1000);
+      }, 4000);
     }
   });
 
